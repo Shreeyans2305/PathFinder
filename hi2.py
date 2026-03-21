@@ -24,6 +24,7 @@ class Cell:
 
         self.maze_visited = False   # for maze generation
         self.path_visited = False   # for DFS visualization
+        self.distance_covered = 0
 
         self.walls = [True, True, True, True]  # top, right, bottom, left
 
@@ -129,7 +130,7 @@ def get_valid_neighbors(cell):
 
 
 # --- DFS PATHFINDING ---
-def pathfinding_algorithm(start, end):
+def dfs(start, end):
     stack = [start]
     visited = set()
 
@@ -148,7 +149,7 @@ def pathfinding_algorithm(start, end):
         pygame.draw.rect(WIN, RED, (end.col * CELL_SIZE, end.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
         pygame.display.update()
-        pygame.time.delay(15)
+        pygame.time.delay(0)
 
         # Allow quitting
         for event in pygame.event.get():
@@ -166,6 +167,124 @@ def pathfinding_algorithm(start, end):
             if neighbor not in visited:
                 stack.append(neighbor)
 
+
+from collections import deque
+
+def bfs(start, end):
+    queue = deque([start])
+    visited = set([start])  # mark immediately
+
+    while queue:
+        current = queue.popleft()
+
+        current.path_visited = True
+
+        # --- DRAW ---
+        draw_grid(WIN)
+        pygame.draw.rect(WIN, GREEN, (start.col * CELL_SIZE, start.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        pygame.draw.rect(WIN, RED, (end.col * CELL_SIZE, end.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+        pygame.display.update()
+        pygame.time.delay(0)
+
+        # Allow quitting
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+        # Goal reached
+        if current == end:
+            print("Reached the end!")
+            return
+
+        # Add neighbors
+        for neighbor in get_valid_neighbors(current):
+            if neighbor not in visited:
+                visited.add(neighbor)   # ✅ mark here
+                queue.append(neighbor)
+
+def manhattan_distance(node,end):
+    return abs(end.row - node.row) + abs(end.col - node.col)
+
+def gbfs(start, end):
+    stack = [start]
+    visited = set()
+    while stack:
+        stack.sort(key=lambda node: manhattan_distance(node,end),reverse=True)
+        current = stack.pop()
+
+        if current in visited:
+            continue
+
+        visited.add(current)
+        current.path_visited = True
+
+        # --- DRAW ---
+        draw_grid(WIN)
+        pygame.draw.rect(WIN, GREEN, (start.col * CELL_SIZE, start.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        pygame.draw.rect(WIN, RED, (end.col * CELL_SIZE, end.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+        pygame.display.update()
+        pygame.time.delay(40)
+
+        # Allow quitting
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+        # Goal reached
+        if current == end:
+            print("Reached the end!")
+            return
+
+        # Add neighbors
+        for neighbor in get_valid_neighbors(current):
+            if neighbor not in visited:
+                stack.append(neighbor)
+
+
+def cost_function(node,end):
+    return manhattan_distance(node,end)+node.distance_covered
+
+def a_star(start, end):
+    stack = [start]
+    visited = set()
+
+    while stack:
+        stack.sort(key=lambda node: cost_function(node,end),reverse=True)
+        current = stack.pop()
+
+        if current in visited:
+            continue
+
+        visited.add(current)
+        current.path_visited = True
+
+        # --- DRAW ---
+        draw_grid(WIN)
+        pygame.draw.rect(WIN, GREEN, (start.col * CELL_SIZE, start.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        pygame.draw.rect(WIN, RED, (end.col * CELL_SIZE, end.row * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+        pygame.display.update()
+        pygame.time.delay(0)
+
+        # Allow quitting
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+        # Goal reached
+        if current == end:
+            print("Reached the end!")
+            return
+        # Add neighbors
+        for neighbor in get_valid_neighbors(current):
+            if neighbor not in visited:
+                neighbor.distance_covered = current.distance_covered+1
+                stack.append(neighbor)
 
 # --- MAIN LOOP ---
 def main():
@@ -191,7 +310,7 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and not started_algo:
                     started_algo = True
-                    pathfinding_algorithm(start, end)
+                    a_star(start, end)
 
     pygame.quit()
 
