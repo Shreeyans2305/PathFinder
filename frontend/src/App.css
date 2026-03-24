@@ -184,6 +184,43 @@
 }
 
 .mapc{
-  height: 400px;
-  width: 400px;
+  height: calc(100vh - 52px);
+  width: 100vw;
+}
+
+.mapc {
+  height: calc(100vh - 52px);
+  width: 100vw;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.controls {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1e1e2e;
+  color: #fff;
+  font-size: 15px;
+  gap: 12px;
+  padding: 0 1rem;
+}
+
+.controls button {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #4F46E5;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background: #4338CA;
 }
