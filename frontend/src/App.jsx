@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
+import { fetchRouteGraph } from "./routeToGraph";
 
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -96,9 +97,11 @@ const App = () => {
     setMode("destination");
   };
 
-  const handleDestinationSet = (latlng) => {
+  const handleDestinationSet = async (latlng) => {
     setDestination(latlng);
     setMode("done");
+    const {graph,nodes,startKey,endKey} = await fetchRouteGraph(source,latlng);
+    console.log(`${Object.keys(graph).length} nodes, ${startKey} -> ${endKey}`)
   };
 
   return (
