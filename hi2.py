@@ -4,7 +4,7 @@ import time
 import heapq
 # --- CONFIG ---
 WIDTH, HEIGHT = 800, 800
-ROWS, COLS = 80, 80
+ROWS, COLS = 20, 20
 CELL_SIZE = WIDTH // COLS
 
 WHITE = (255, 255, 255)
