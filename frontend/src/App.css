@@ -71,3 +71,57 @@
 .leaflet-routing-container {
   display: none !important;
 }
+
+.search-bar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #060300;
+  border-bottom: 1px solid #1a0900;
+  padding: 0 1.5rem;
+}
+
+.search-bar input {
+  width: 280px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #3a1a00;
+  background: #130800;
+  color: #ffaa00;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search-bar input::placeholder { color: #7a4a00; }
+.search-bar input:focus { border-color: #7a3a00; }
+
+.search-bar button {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #3a1a00;
+  background: #130800;
+  color: #ffaa00;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-bar button:hover {
+  background: #2a1000;
+  color: #ffcc44;
+}
+
+.search-error {
+  color: #ff4444;
+  font-size: 13px;
+}
+
+/* Shrink map to account for both bars */
+.mapc {
+  height: calc(100vh - 100px);
+  width: 100vw;
+}

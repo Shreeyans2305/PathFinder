@@ -113,6 +113,43 @@ export function astar(graph, nodes, start, end) {
   return { path: reconstructPath(parent, start, end), visitedOrder, parent };
 }
 
+export function gbfs(graph, nodes, start, end) {
+  const endNode = nodes[end];
+  const h = (key) => {
+    const n = nodes[key];
+    if (!n) return 0;
+    const R = 6371000;
+    const r = x => (x * Math.PI) / 180;
+    const dLat = r(endNode.lat - n.lat);
+    const dLng = r(endNode.lng - n.lng);
+    const a = Math.sin(dLat/2)**2 + Math.cos(r(n.lat)) * Math.cos(r(endNode.lat)) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  };
+
+  const hScore = { [start]: h(start) };
+  const parent = {};
+  const open = new Set([start]);
+  const visited = new Set();
+  const visitedOrder = [];
+
+  while (open.size) {
+    let u = [...open].reduce((a, b) => (hScore[a] ?? Infinity) < (hScore[b] ?? Infinity) ? a : b);
+
+    if (u === end) break;
+    open.delete(u);
+    visited.add(u);
+    visitedOrder.push(u);
+
+    for (const { neighbour } of graph[u] ?? []) {
+      if (visited.has(neighbour) || open.has(neighbour)) continue;
+      parent[neighbour] = u;
+      hScore[neighbour] = h(neighbour);
+      open.add(neighbour);
+    }
+  }
+
+  return { path: reconstructPath(parent, start, end), visitedOrder, parent };
+}
 // ── Shared path reconstruction ────────────────────────────────────────────────
 function reconstructPath(parent, start, end) {
   const path = [];

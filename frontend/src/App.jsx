@@ -13,7 +13,7 @@ import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
 import { fetchRouteGraph } from "./routeToGraph";
-import { dfs, bfs, dijkstra, astar } from "./algorithms";
+import { dfs, bfs, dijkstra, astar, gbfs } from "./algorithms";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -121,60 +121,102 @@ function ClickHandler({ onSourceSet, onDestinationSet, mode }) {
   return null;
 }
 
+function MapRef({ mapRef }) {
+  const map = useMap();
+  useEffect(() => { mapRef.current = map; }, [map, mapRef]);
+  return null;
+}
+
 const App = () => {
   const [source, setSource]           = React.useState(null);
   const [destination, setDestination] = React.useState(null);
   const [mode, setMode]               = React.useState("source");
   const [pathFound, setPathFound]     = React.useState(false);
   const [algorithm, setAlgorithm]     = React.useState("dijkstra");
+  const [citySearch, setCitySearch]   = React.useState("");
+  const [searchError, setSearchError]   = React.useState(null);
+  const [error, setError]   = React.useState(null);
+  const [loading, setLoading]   = React.useState(false);
+  const mapRef = React.useRef(null);
 
   const animationRef  = React.useRef([]);   // holds setTimeout IDs
   const graphCache    = React.useRef(null); // cached OSRM graph
   const explorationRef = React.useRef(null); // imperative API from ExplorationLayer
 
-  const runAlgorithm = async () => {
-    // Cancel any in-progress animation
-    animationRef.current.forEach(clearTimeout);
-    animationRef.current = [];
+const runAlgorithm = async () => {
+  animationRef.current.forEach(clearTimeout);
+  animationRef.current = [];
+  explorationRef.current?.clear();
+  setPathFound(false);
+  setError(null);
+  setLoading(true);
 
-    // Clear previous exploration edges via the imperative layer API
-    explorationRef.current?.clear();
-    setPathFound(false);
-
+  try {
     if (!graphCache.current) {
       graphCache.current = await fetchRouteGraph(source, destination);
     }
 
     const { graph, nodes, startKey, endKey } = graphCache.current;
 
+    if (!startKey || !endKey || Object.keys(graph).length === 0) {
+      throw new Error("Could not build a road graph for this area.");
+    }
+
+    setLoading(false);
+
     let result;
     if      (algorithm === "dfs")   result = dfs(graph, startKey, endKey);
     else if (algorithm === "bfs")   result = bfs(graph, startKey, endKey);
     else if (algorithm === "astar") result = astar(graph, nodes, startKey, endKey);
+    else if (algorithm === "gbfs")  result = gbfs(graph, nodes, startKey, endKey);
     else                            result = dijkstra(graph, startKey, endKey);
 
     const { visitedOrder, parent } = result;
-    const DELAY = 20; // ms between each edge — lower = faster sweep
+    const DELAY = 20;
 
-    // Schedule each edge as a direct Leaflet draw — no React state involved
     animationRef.current = visitedOrder.map((key, i) =>
       setTimeout(() => {
         const parentKey = parent[key];
         if (!parentKey) return;
-
         const [latA, lngA] = parentKey.split(",").map(Number);
         const [latB, lngB] = key.split(",").map(Number);
-
         explorationRef.current?.addEdge(latA, lngA, latB, lngB);
       }, i * DELAY)
     );
 
-    // Show final route once all edges are drawn
-    setTimeout(
-      () => setPathFound(true),
-      visitedOrder.length * DELAY + 300,
+    setTimeout(() => setPathFound(true), visitedOrder.length * DELAY + 300);
+
+  } catch (err) {
+    setError(err.message);
+    graphCache.current = null;
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const searchCity = async () => {
+  if (!citySearch.trim()) return;
+  setSearchError(null);
+  try {
+    const res  = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(citySearch)}&format=json&limit=1`,
+      { headers: { "Accept-Language": "en" } }
     );
-  };
+    const data = await res.json();
+    if (!data.length) {
+      setSearchError("City not found — try a different name.");
+      return;
+    }
+    const { lat, lon } = data[0];
+    mapRef.current?.flyTo([parseFloat(lat), parseFloat(lon)], 14, {
+      animate: true,
+      duration: 1.8,
+    });
+    reset(); // clear pins when navigating to a new city
+  } catch {
+    setSearchError("Search failed — check your connection.");
+  }
+};
 
   const reset = () => {
     animationRef.current.forEach(clearTimeout);
@@ -198,67 +240,84 @@ const App = () => {
     setMode("done");
   };
 
-  return (
-    <div className="app-wrapper">
-      <div className="controls">
-        {mode === "source" && (
-          <p>📍 Click the map to set <strong>source</strong></p>
-        )}
-        {mode === "destination" && (
-          <p>🏁 Click the map to set <strong>destination</strong></p>
-        )}
-        {mode === "done" && (
-          <>
-            <select value={algorithm} onChange={(e) => setAlgorithm(e.target.value)}>
-              <option value="dfs">DFS</option>
-              <option value="bfs">BFS</option>
-              <option value="dijkstra">Dijkstra</option>
-              <option value="astar">A*</option>
-            </select>
-            <button onClick={runAlgorithm}>▶ Run</button>
-            <button onClick={reset}>↺ Reset</button>
-          </>
-        )}
-      </div>
+ return (
+  <div className="app-wrapper">
 
-      <MapContainer
-        center={[40.7580, -73.9855]}
-        zoom={13}
-        scrollWheelZoom={true}
-        className="mapc"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-
-        <ClickHandler
-          onSourceSet={handleSourceSet}
-          onDestinationSet={handleDestinationSet}
-          mode={mode}
-        />
-
-        {/* Native Leaflet layer for exploration edges — no React re-renders */}
-        <ExplorationLayer commandRef={explorationRef} />
-
-        {source && (
-          <Marker position={[source.lat, source.lng]} icon={sourceIcon}>
-            <Popup>Source</Popup>
-          </Marker>
-        )}
-        {destination && (
-          <Marker position={[destination.lat, destination.lng]} icon={destIcon}>
-            <Popup>Destination</Popup>
-          </Marker>
-        )}
-
-        {/* Final route — only appears after full animation completes */}
-        {pathFound && source && destination && (
-          <RoutingControl source={source} destination={destination} />
-        )}
-      </MapContainer>
+    {/* City search bar */}
+    <div className="search-bar">
+      <input
+        type="text"
+        placeholder="Search for a city..."
+        value={citySearch}
+        onChange={e => setCitySearch(e.target.value)}
+        onKeyDown={e => e.key === "Enter" && searchCity()}
+      />
+      <button onClick={searchCity}>Search</button>
+      {searchError && <span className="search-error">{searchError}</span>}
     </div>
-  );
+
+    <div className="controls">
+      {mode === "source" && (
+        <p>📍 Click the map to set <strong>source</strong></p>
+      )}
+      {mode === "destination" && (
+        <p>🏁 Click the map to set <strong>destination</strong></p>
+      )}
+      {mode === "done" && (
+        <>
+          <select
+            value={algorithm}
+            onChange={e => setAlgorithm(e.target.value)}
+            disabled={loading}
+          >
+            <option value="dfs">DFS</option>
+            <option value="bfs">BFS</option>
+            <option value="dijkstra">Dijkstra</option>
+            <option value="astar">A*</option>
+            <option value="gbfs">GBFS</option>
+          </select>
+          <button onClick={runAlgorithm} disabled={loading}>
+            {loading ? "⏳ Fetching roads..." : "▶ Run"}
+          </button>
+          <button onClick={reset} disabled={loading}>↺ Reset</button>
+          {error && <span style={{ color: "#ff4444", fontSize: "13px" }}>{error}</span>}
+        </>
+      )}
+    </div>
+
+    <MapContainer
+      center={[40.7580, -73.9855]}
+      zoom={13}
+      scrollWheelZoom={true}
+      className="mapc"
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      />
+      <MapRef mapRef={mapRef} />
+      <ClickHandler
+        onSourceSet={handleSourceSet}
+        onDestinationSet={handleDestinationSet}
+        mode={mode}
+      />
+      <ExplorationLayer commandRef={explorationRef} />
+      {source && (
+        <Marker position={[source.lat, source.lng]} icon={sourceIcon}>
+          <Popup>Source</Popup>
+        </Marker>
+      )}
+      {destination && (
+        <Marker position={[destination.lat, destination.lng]} icon={destIcon}>
+          <Popup>Destination</Popup>
+        </Marker>
+      )}
+      {pathFound && source && destination && (
+        <RoutingControl source={source} destination={destination} />
+      )}
+    </MapContainer>
+  </div>
+);
 };
 
 export default App;
