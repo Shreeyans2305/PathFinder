@@ -3,10 +3,25 @@
 // Saves the road graph to public/graphs/{city}.json
 
 const CITIES = {
-  london:   { lat: 51.505,  lng: -0.09,   name: "London"   },
-  newyork:  { lat: 40.758,  lng: -73.985, name: "New York"  },
-  mumbai:   { lat: 19.076,  lng: 72.877,  name: "Mumbai"    },
-  paris:    { lat: 48.856,  lng: 2.352,   name: "Paris"     },
+  london:     { lat: 51.505,  lng: -0.09,    name: "London" },
+  newyork:    { lat: 40.758,  lng: -73.985,  name: "New York" },
+  mumbai:     { lat: 19.076,  lng: 72.877,   name: "Mumbai" },
+  paris:      { lat: 48.856,  lng: 2.352,    name: "Paris" },
+
+  tokyo:      { lat: 35.676,  lng: 139.650,  name: "Tokyo" },
+  dubai:      { lat: 25.204,  lng: 55.270,   name: "Dubai" },
+  singapore:  { lat: 1.352,   lng: 103.820,  name: "Singapore" },
+  sydney:     { lat: -33.868, lng: 151.209,  name: "Sydney" },
+  losangeles: { lat: 34.052,  lng: -118.244, name: "Los Angeles" },
+  toronto:    { lat: 43.653,  lng: -79.383,  name: "Toronto" },
+  berlin:     { lat: 52.520,  lng: 13.405,   name: "Berlin" },
+  moscow:     { lat: 55.755,  lng: 37.617,   name: "Moscow" },
+  beijing:    { lat: 39.904,  lng: 116.407,  name: "Beijing" },
+  delhi:      { lat: 28.613,  lng: 77.209,   name: "Delhi" },
+  bangalore:  { lat: 12.971,  lng: 77.594,   name: "Bangalore" },
+  capeTown:   { lat: -33.924, lng: 18.424,   name: "Cape Town" },
+  rio:        { lat: -22.906, lng: -43.172,  name: "Rio de Janeiro" },
+  mexicoCity: { lat: 19.432,  lng: -99.133,  name: "Mexico City" },
 };
 
 // Bounding box — covers a walkable/drivable city area (~5km radius)

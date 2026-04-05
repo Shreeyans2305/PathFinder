@@ -21,7 +21,14 @@ export async function fetchRouteGraph(source, destination) {
 
   return { graph, nodes, startKey, endKey };
 }
-
+// routeToGraph.js — add export
+export const CITY_CENTERS = {
+  london:  { lat: 51.505,  lng: -0.09,   radius: 0.09, label: "London" },
+  newyork: { lat: 40.758,  lng: -73.985, radius: 0.09, label: "New York" },
+  mumbai:  { lat: 19.076,  lng: 72.877,  radius: 0.09, label: "Mumbai" },
+  paris:   { lat: 48.856,  lng: 2.352,   radius: 0.09, label: "Paris" },
+  tokyo:      { lat: 35.676,  lng: 139.650,  name: "Tokyo" },
+};
 // Determine which city graph to load based on where the user clicked
 async function detectCity(point) {
   const CITY_CENTERS = {
@@ -29,6 +36,7 @@ async function detectCity(point) {
     newyork: { lat: 40.758,  lng: -73.985, radius: 0.09 },
     mumbai:  { lat: 19.076,  lng: 72.877,  radius: 0.09 },
     paris:   { lat: 48.856,  lng: 2.352,   radius: 0.09 },
+    tokyo:   { lat: 35.676,  lng: 139.650,  radius: 0.09 }
   };
 
   for (const [key, city] of Object.entries(CITY_CENTERS)) {
@@ -37,7 +45,7 @@ async function detectCity(point) {
     if (dLat < city.radius && dLng < city.radius) return key;
   }
 
-  throw new Error("Please pick points within a supported city: London, New York, Mumbai, or Paris.");
+  throw new Error("Please pick points within a supported city: London, New York, Mumbai, Paris, or Tokyo.");
 }
 
 function nearestNode(lat, lng, nodes) {

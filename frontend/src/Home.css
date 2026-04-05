@@ -1,0 +1,9 @@
+.home-page {
+  min-height: 100dvh;
+  background: radial-gradient(circle at 20% 10%, #1c1c1f, #09090b 58%);
+}
+
+.home-main {
+  min-height: 100dvh;
+  padding-top: 86px;
+}
