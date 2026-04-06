@@ -11,6 +11,9 @@ const CITY_STYLES = {
   mumbai: { emoji: "🌴", subtitle: "Coastal Routes", zoom: 13 },
   paris: { emoji: "🗼", subtitle: "Boulevard Paths", zoom: 13 },
   tokyo: { emoji: "🗾", subtitle: "Dense Web", zoom: 13 },
+  rio:  { emoji: "🌴", subtitle: "Tropical City", zoom: 13 },
+  delhi: { emoji: "🌴", subtitle: "Historic City", zoom: 13 },
+  berlin: { emoji: "🏰", subtitle: "City of History", zoom: 13 },
 };
 
 function MiniMapResizeFix() {
