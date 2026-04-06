@@ -207,29 +207,6 @@ const Pathfinder = () => {
     }
   };
 
-  const searchCity = async () => {
-    if (!citySearch.trim()) return;
-    setSearchError(null);
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(citySearch)}&format=json&limit=1`,
-        { headers: { "Accept-Language": "en" } },
-      );
-      const data = await res.json();
-      if (!data.length) {
-        setSearchError("City not found — try a different name.");
-        return;
-      }
-      const { lat, lon } = data[0];
-      mapRef.current?.flyTo([parseFloat(lat), parseFloat(lon)], 14, {
-        animate: true,
-        duration: 1.8,
-      });
-      reset(); // clear pins when navigating to a new city
-    } catch {
-      setSearchError("Search failed — check your connection.");
-    }
-  };
 
   const reset = () => {
     animationRef.current.forEach(clearTimeout);
@@ -255,18 +232,6 @@ const Pathfinder = () => {
 
   return (
     <div className="app-wrapper">
-      {/* City search bar */}
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search for a city..."
-          value={citySearch}
-          onChange={(e) => setCitySearch(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && searchCity()}
-        />
-        <button onClick={searchCity}>Search</button>
-        {searchError && <span className="search-error">{searchError}</span>}
-      </div>
       {/* Supported city buttons */}
       <div className="city-buttons">
         {Object.entries(CITY_CENTERS).map(([key, city]) => (
