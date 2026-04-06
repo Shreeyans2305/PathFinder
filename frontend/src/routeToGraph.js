@@ -27,7 +27,7 @@ export const CITY_CENTERS = {
   newyork: { lat: 40.758,  lng: -73.985, radius: 0.09, label: "New York" },
   mumbai:  { lat: 19.076,  lng: 72.877,  radius: 0.09, label: "Mumbai" },
   paris:   { lat: 48.856,  lng: 2.352,   radius: 0.09, label: "Paris" },
-  tokyo:      { lat: 35.676,  lng: 139.650,  name: "Tokyo" },
+  tokyo:      { lat: 35.676,  lng: 139.650,  radius: 0.09, label: "Tokyo" },
 };
 // Determine which city graph to load based on where the user clicked
 async function detectCity(point) {
