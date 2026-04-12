@@ -14,6 +14,7 @@ const CITY_STYLES = {
   rio:  { emoji: "🌴", subtitle: "Tropical City", zoom: 13 },
   delhi: { emoji: "🌴", subtitle: "Historic City", zoom: 13 },
   berlin: { emoji: "🏰", subtitle: "City of History", zoom: 13 },
+  sydney: { emoji: "🌊", subtitle: "Harbor City", zoom: 13 },
 };
 
 function MiniMapResizeFix() {

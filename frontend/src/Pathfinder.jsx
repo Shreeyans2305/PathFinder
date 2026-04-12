@@ -143,8 +143,11 @@ function MapRef({ mapRef }) {
 function CityQuerySync({ onCityPicked }) {
   const map = useMap();
   const location = useLocation();
+  const lastHandledSearchRef = useRef(null);
 
   useEffect(() => {
+    if (lastHandledSearchRef.current === location.search) return;
+
     const params = new URLSearchParams(location.search);
     const cityKey = params.get("city");
     if (!cityKey) return;
@@ -152,6 +155,8 @@ function CityQuerySync({ onCityPicked }) {
     const normalized = cityKey.toLowerCase();
     const city = CITY_CENTERS[normalized];
     if (!city) return;
+
+    lastHandledSearchRef.current = location.search;
 
     map.flyTo([city.lat, city.lng], 14, {
       animate: true,
@@ -247,7 +252,7 @@ const Pathfinder = () => {
   };
 
 
-  const reset = () => {
+  const reset = React.useCallback(() => {
     clearAllTimers();
     graphCache.current = null;
     explorationRef.current?.clear();
@@ -257,7 +262,7 @@ const Pathfinder = () => {
     setPathFound(false);
     setLoading(false);
     setIsAnimating(false);
-  };
+  }, [clearAllTimers]);
 
   const handleSourceSet = (latlng) => {
     setSource(latlng);

@@ -31,6 +31,7 @@ export const CITY_CENTERS = {
   rio:        { lat: -22.906, lng: -43.172,  radius: 0.09, label: "Rio de Janeiro" },
   delhi:      { lat: 28.613,  lng: 77.209,   radius: 0.09, label: "Delhi" },
   berlin:     { lat: 52.520,  lng: 13.405,   radius: 0.09, label: "Berlin" },
+  sydney:     { lat: -33.868, lng: 151.209,  radius: 0.09, label: "Sydney" },
 };
 // Determine which city graph to load based on where the user clicked
 async function detectCity(point) {
@@ -43,6 +44,7 @@ async function detectCity(point) {
     rio:     { lat: -22.906, lng: -43.172, radius: 0.09},
     delhi:   { lat: 28.613,  lng: 77.209,   radius: 0.09},
     berlin:  { lat: 52.520,  lng: 13.405,   radius: 0.09},
+    sydney:  { lat: -33.868, lng: 151.209,  radius: 0.09},
   };
 
   for (const [key, city] of Object.entries(CITY_CENTERS)) {
@@ -51,7 +53,7 @@ async function detectCity(point) {
     if (dLat < city.radius && dLng < city.radius) return key;
   }
 
-  throw new Error("Please pick points within a supported city: London, New York, Mumbai, Paris, Rio, Delhi or Tokyo.");
+  throw new Error("Please pick points within a supported city: London, New York, Mumbai, Paris, Rio, Delhi, Sydney or Tokyo.");
 }
 
 function nearestNode(lat, lng, nodes) {
