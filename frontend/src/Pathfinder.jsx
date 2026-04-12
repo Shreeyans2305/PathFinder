@@ -14,6 +14,7 @@ import "leaflet/dist/leaflet.css";
 import "./Pathfinder.css";
 import { fetchRouteGraph, CITY_CENTERS } from "./routeToGraph";
 import { dfs, bfs, dijkstra, astar, gbfs } from "./algorithms";
+import { useLocation } from "react-router-dom";
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -139,6 +140,29 @@ function MapRef({ mapRef }) {
   return null;
 }
 
+function CityQuerySync({ onCityPicked }) {
+  const map = useMap();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cityKey = params.get("city");
+    if (!cityKey) return;
+
+    const normalized = cityKey.toLowerCase();
+    const city = CITY_CENTERS[normalized];
+    if (!city) return;
+
+    map.flyTo([city.lat, city.lng], 14, {
+      animate: true,
+      duration: 1.3,
+    });
+    onCityPicked?.();
+  }, [location.search, map, onCityPicked]);
+
+  return null;
+}
+
 const Pathfinder = () => {
   const [source, setSource] = React.useState(null);
   const [destination, setDestination] = React.useState(null);
@@ -149,19 +173,27 @@ const Pathfinder = () => {
   const [searchError, setSearchError] = React.useState(null);
   const [error, setError] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+  const [isAnimating, setIsAnimating] = React.useState(false);
   const mapRef = React.useRef(null);
 
   const animationRef = React.useRef([]); // holds setTimeout IDs
   const graphCache = React.useRef(null); // cached OSRM graph
   const explorationRef = React.useRef(null); // imperative API from ExplorationLayer
 
-  const runAlgorithm = async () => {
+  const clearAllTimers = React.useCallback(() => {
     animationRef.current.forEach(clearTimeout);
     animationRef.current = [];
+  }, []);
+
+  const runAlgorithm = async () => {
+    if (loading || isAnimating) return;
+
+    clearAllTimers();
     explorationRef.current?.clear();
     setPathFound(false);
     setError(null);
     setLoading(true);
+    setIsAnimating(false);
 
     try {
       if (!graphCache.current) {
@@ -174,7 +206,8 @@ const Pathfinder = () => {
         throw new Error("Could not build a road graph for this area.");
       }
 
-      setLoading(false);
+        setLoading(false);
+        setIsAnimating(true);
 
       let result;
       if (algorithm === "dfs") result = dfs(graph, startKey, endKey);
@@ -198,10 +231,16 @@ const Pathfinder = () => {
         }, i * DELAY),
       );
 
-      setTimeout(() => setPathFound(true), visitedOrder.length * DELAY + 300);
+      const completionTimer = setTimeout(() => {
+        setPathFound(true);
+        setIsAnimating(false);
+      }, visitedOrder.length * DELAY + 300);
+
+      animationRef.current.push(completionTimer);
     } catch (err) {
       setError(err.message);
       graphCache.current = null;
+      setIsAnimating(false);
     } finally {
       setLoading(false);
     }
@@ -209,14 +248,15 @@ const Pathfinder = () => {
 
 
   const reset = () => {
-    animationRef.current.forEach(clearTimeout);
-    animationRef.current = [];
+    clearAllTimers();
     graphCache.current = null;
     explorationRef.current?.clear();
     setSource(null);
     setDestination(null);
     setMode("source");
     setPathFound(false);
+    setLoading(false);
+    setIsAnimating(false);
   };
 
   const handleSourceSet = (latlng) => {
@@ -266,7 +306,7 @@ const Pathfinder = () => {
             <select
               value={algorithm}
               onChange={(e) => setAlgorithm(e.target.value)}
-              disabled={loading}
+              disabled={loading || isAnimating}
             >
               <option value="dfs">DFS</option>
               <option value="bfs">BFS</option>
@@ -274,10 +314,14 @@ const Pathfinder = () => {
               <option value="astar">A*</option>
               <option value="gbfs">GBFS</option>
             </select>
-            <button onClick={runAlgorithm} disabled={loading}>
-              {loading ? "⏳ Fetching roads..." : "▶ Run"}
+            <button onClick={runAlgorithm} disabled={loading || isAnimating}>
+              {loading
+                ? "⏳ Fetching roads..."
+                : isAnimating
+                  ? "🎞 Tracing..."
+                  : "▶ Run"}
             </button>
-            <button onClick={reset} disabled={loading}>
+            <button onClick={reset} disabled={loading || isAnimating}>
               ↺ Reset
             </button>
             {error && (
@@ -304,6 +348,7 @@ const Pathfinder = () => {
         >
         </TileLayer>
         <MapRef mapRef={mapRef} />
+        <CityQuerySync onCityPicked={reset} />
         <ClickHandler
           onSourceSet={handleSourceSet}
           onDestinationSet={handleDestinationSet}

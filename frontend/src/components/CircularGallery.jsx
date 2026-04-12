@@ -54,28 +54,51 @@ function CityMiniMap({ lat, lng, zoom }) {
 }
 
 export default function CircularGallery() {
+  const trackRef = React.useRef(null);
+
   const cities = Object.entries(CITY_CENTERS).map(([key, city]) => ({
     key,
     ...city,
     ...(CITY_STYLES[key] ?? { emoji: "📍", subtitle: "City Network", zoom: 13 }),
   }));
 
+  const scrollTrack = (direction) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const amount = Math.max(280, Math.round(track.clientWidth * 0.72));
+    track.scrollBy({ left: direction * amount, behavior: "smooth" });
+  };
+
   return (
     <section className="cg-shell" aria-label="City map gallery">
       <div className="cg-frame">
-        <div className="cg-track" role="list" aria-label="Supported city previews">
+        <button
+          type="button"
+          className="cg-nav cg-nav-left"
+          aria-label="Scroll city maps left"
+          onClick={() => scrollTrack(-1)}
+        >
+          ←
+        </button>
+
+        <div
+          ref={trackRef}
+          className="cg-track"
+          role="list"
+          aria-label="Supported city previews"
+        >
           {cities.map((city, index) => {
-            const mid = (cities.length - 1) / 2;
-            const normalized = (index - mid) / (mid || 1);
-            const tilt = normalized * 11;
-            const drop = Math.abs(normalized) * 28;
+            const tilt = -4;
+            const dropPattern = [14, 10, 6, 2, 6, 10, 14, 8];
+            const drop = dropPattern[index % dropPattern.length];
 
             return (
-              <article
+              <Link
                 key={city.key}
+                to={`/pathfinder?city=${encodeURIComponent(city.key)}`}
                 className="cg-city-card"
                 style={{ "--tilt": `${tilt}deg`, "--drop": `${drop}px` }}
-                aria-label={`${city.label} map preview`}
+                aria-label={`Open ${city.label} in Pathfinder`}
                 role="listitem"
               >
                 <div className="cg-map-wrap">
@@ -88,10 +111,19 @@ export default function CircularGallery() {
                   {city.label}
                 </h3>
                 <p>{city.subtitle}</p>
-              </article>
+              </Link>
             );
           })}
         </div>
+
+        <button
+          type="button"
+          className="cg-nav cg-nav-right"
+          aria-label="Scroll city maps right"
+          onClick={() => scrollTrack(1)}
+        >
+          →
+        </button>
       </div>
 
       <div className="cg-actions">

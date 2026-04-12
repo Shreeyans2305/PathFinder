@@ -1,9 +1,59 @@
 .home-page {
   min-height: 100dvh;
-  background: radial-gradient(circle at 20% 10%, #1c1c1f, #09090b 58%);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(74, 65, 183, 0.25), transparent 38%),
+    radial-gradient(circle at 80% 20%, rgba(255, 135, 36, 0.18), transparent 34%),
+    radial-gradient(circle at 50% 100%, #111325, #07080d 58%);
 }
 
 .home-main {
   min-height: 100dvh;
-  padding-top: 86px;
+  padding: 96px clamp(14px, 2vw, 32px) 24px;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.home-hero {
+  text-align: center;
+  margin: 0 auto 18px;
+  max-width: 900px;
+}
+
+.home-kicker {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d6dcff;
+  background: rgba(138, 148, 255, 0.14);
+  border: 1px solid rgba(158, 170, 255, 0.25);
+}
+
+.home-hero h1 {
+  margin: 0;
+  line-height: 1.1;
+  color: #f9fbff;
+  font-size: clamp(1.7rem, 3.2vw, 3.1rem);
+  font-weight: 700;
+}
+
+.home-subtitle {
+  margin: 12px auto 0;
+  color: rgba(234, 238, 255, 0.82);
+  line-height: 1.5;
+  max-width: 720px;
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+}
+
+@media (max-width: 800px) {
+  .home-main {
+    padding-top: 90px;
+  }
+
+  .home-hero {
+    margin-bottom: 14px;
+  }
 }
