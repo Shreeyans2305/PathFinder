@@ -89,6 +89,10 @@
   filter: brightness(1.08);
 }
 
+.pill-view-toggle {
+  font-size: 14px;
+}
+
 .pill-list {
   list-style: none;
   display: flex;

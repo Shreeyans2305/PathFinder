@@ -54,8 +54,9 @@ function CityMiniMap({ lat, lng, zoom }) {
   );
 }
 
-export default function CircularGallery() {
+export default function CircularGallery({ view = "circular" }) {
   const trackRef = React.useRef(null);
+  const isListView = view === "list";
 
   const cities = Object.entries(CITY_CENTERS).map(([key, city]) => ({
     key,
@@ -64,6 +65,7 @@ export default function CircularGallery() {
   }));
 
   const scrollTrack = (direction) => {
+    if (isListView) return;
     const track = trackRef.current;
     if (!track) return;
     const amount = Math.max(280, Math.round(track.clientWidth * 0.72));
@@ -71,7 +73,10 @@ export default function CircularGallery() {
   };
 
   return (
-    <section className="cg-shell" aria-label="City map gallery">
+    <section
+      className={`cg-shell ${isListView ? "cg-view-list" : "cg-view-circular"}`}
+      aria-label="City map gallery"
+    >
       <div className="cg-frame">
         <button
           type="button"
@@ -91,8 +96,8 @@ export default function CircularGallery() {
           {cities.map((city, index) => {
             const mid = (cities.length - 1) / 2;
             const normalized = (index - mid) / (mid || 1);
-            const tilt = normalized * 10;
-            const drop = Math.round(Math.abs(normalized) * 22);
+            const tilt = isListView ? 0 : normalized * 10;
+            const drop = isListView ? 0 : Math.round(Math.abs(normalized) * 22);
 
             return (
               <Link

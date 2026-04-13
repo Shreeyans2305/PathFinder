@@ -3,9 +3,21 @@ import PillNav from "./components/PillNav";
 import logo from "/PathFinder.png";
 import "./Home.css";
 import CircularGallery from "./components/CircularGallery";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Home = ({ theme, onToggleTheme }) => {
   const isDark = theme === "dark";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentView =
+    new URLSearchParams(location.search).get("view") === "list"
+      ? "list"
+      : "circular";
+
+  const toggleView = React.useCallback(() => {
+    const nextView = currentView === "list" ? "circular" : "list";
+    navigate(nextView === "list" ? "/?view=list" : "/");
+  }, [currentView, navigate]);
 
   return (
     <div className="home-page">
@@ -24,6 +36,9 @@ const Home = ({ theme, onToggleTheme }) => {
         hoveredPillTextColor={isDark ? "#ffffff" : "#111827"}
         pillTextColor={isDark ? "#f5f5f5" : "#1f2937"}
         theme={theme}
+        showViewToggle={true}
+        viewMode={currentView}
+        onViewToggle={toggleView}
         showThemeToggle={true}
         onThemeToggle={onToggleTheme}
         initialLoadAnimation={true}
@@ -36,7 +51,7 @@ const Home = ({ theme, onToggleTheme }) => {
             Dijkstra, A* and GBFS discover routes in real time.
           </p>
         </section>
-        <CircularGallery />
+        <CircularGallery view={currentView} />
       </main>
     </div>
   );

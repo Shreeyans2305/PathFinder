@@ -11,8 +11,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./Pathfinder.css";
-import { fetchRouteGraph, CITY_CENTERS } from "./routeToGraph";
-import { dfs, bfs, dijkstra, astar, gbfs } from "./algorithms";
+import { CITY_CENTERS } from "./routeToGraph";
 import { useLocation } from "react-router-dom";
 import PillNav from "./components/PillNav";
 import logo from "/PathFinder.png";
@@ -168,15 +167,64 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
   const mapRef = React.useRef(null);
 
   const animationRef = React.useRef([]);
-  const graphCache = React.useRef(null);
   const explorationRef = React.useRef(null);
+  const workerRef = React.useRef(null);
+  const requestSeqRef = React.useRef(0);
+  const pendingRequestsRef = React.useRef(new Map());
 
   const clearAllTimers = React.useCallback(() => {
     animationRef.current.forEach(clearTimeout);
     animationRef.current = [];
   }, []);
 
-  const runAlgorithm = async () => {
+  useEffect(() => {
+    const worker = new Worker(
+      new URL("./workers/pathfindingWorker.js", import.meta.url),
+      { type: "module" },
+    );
+
+    workerRef.current = worker;
+
+    worker.onmessage = (event) => {
+      const { id, ok, result, error } = event.data || {};
+      const pending = pendingRequestsRef.current.get(id);
+      if (!pending) return;
+
+      pendingRequestsRef.current.delete(id);
+      if (ok) pending.resolve(result);
+      else pending.reject(new Error(error || "Pathfinding failed."));
+    };
+
+    worker.onerror = () => {
+      pendingRequestsRef.current.forEach(({ reject }) => {
+        reject(new Error("Path worker crashed."));
+      });
+      pendingRequestsRef.current.clear();
+    };
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+      pendingRequestsRef.current.forEach(({ reject }) => {
+        reject(new Error("Path worker terminated."));
+      });
+      pendingRequestsRef.current.clear();
+    };
+  }, []);
+
+  const runPathSearch = React.useCallback((payload) => {
+    if (!workerRef.current) {
+      return Promise.reject(new Error("Path worker unavailable."));
+    }
+
+    const id = `req-${++requestSeqRef.current}`;
+    return new Promise((resolve, reject) => {
+      pendingRequestsRef.current.set(id, { resolve, reject });
+      workerRef.current.postMessage({ id, ...payload });
+    });
+  }, []);
+
+  const runAlgorithm = React.useCallback(async () => {
     if (loading || isAnimating || !source || !destination) return;
 
     clearAllTimers();
@@ -188,23 +236,12 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
     setIsAnimating(false);
 
     try {
-      if (!graphCache.current) {
-        graphCache.current = await fetchRouteGraph(source, destination);
-      }
+      const { visitedOrder, parent, path } = await runPathSearch({
+        source,
+        destination,
+        algorithm,
+      });
 
-      const { graph, nodes, startKey, endKey } = graphCache.current;
-      if (!startKey || !endKey || Object.keys(graph).length === 0) {
-        throw new Error("Could not build a road graph for this area.");
-      }
-
-      let result;
-      if (algorithm === "dfs") result = dfs(graph, startKey, endKey);
-      else if (algorithm === "bfs") result = bfs(graph, startKey, endKey);
-      else if (algorithm === "astar") result = astar(graph, nodes, startKey, endKey);
-      else if (algorithm === "gbfs") result = gbfs(graph, nodes, startKey, endKey);
-      else result = dijkstra(graph, startKey, endKey);
-
-      const { visitedOrder, parent, path } = result;
       if (!path || path.length < 2) {
         throw new Error("Could not find a shortest path for this area.");
       }
@@ -232,15 +269,13 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
       animationRef.current.push(completionTimer);
     } catch (err) {
       setError(err.message);
-      graphCache.current = null;
       setLoading(false);
       setIsAnimating(false);
     }
-  };
+  }, [algorithm, clearAllTimers, destination, isAnimating, loading, runPathSearch, source]);
 
   const reset = React.useCallback(() => {
     clearAllTimers();
-    graphCache.current = null;
     explorationRef.current?.clear();
     setSource(null);
     setDestination(null);
@@ -258,7 +293,6 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
   };
 
   const handleDestinationSet = (latlng) => {
-    graphCache.current = null;
     setDestination(latlng);
     setMode("done");
   };

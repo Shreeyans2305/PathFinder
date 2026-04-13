@@ -18,7 +18,10 @@ const PillNav = ({
   initialLoadAnimation = true,
   theme = 'dark',
   showThemeToggle = false,
-  onThemeToggle
+  onThemeToggle,
+  showViewToggle = false,
+  onViewToggle,
+  viewMode = 'circular'
 }) => {
   const resolvedPillTextColor = pillTextColor ?? baseColor;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -330,6 +333,18 @@ const PillNav = ({
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
             {theme === 'dark' ? '☀' : '⏾'}
+          </button>
+        )}
+
+        {showViewToggle && (
+          <button
+            className="pill-theme-toggle pill-view-toggle"
+            type="button"
+            onClick={onViewToggle}
+            aria-label={`Switch to ${viewMode === 'list' ? 'circular' : 'list'} view`}
+            title={`Switch to ${viewMode === 'list' ? 'circular' : 'list'} view`}
+          >
+            {viewMode === 'list' ? '◉' : '☰'}
           </button>
         )}
       </nav>
