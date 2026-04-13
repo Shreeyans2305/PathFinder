@@ -1,19 +1,37 @@
-import React from 'react'
-import Pathfinder from './Pathfinder'
-import Home from './Home';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import PillNav from './components/PillNav';
-import logo from'/favicon.svg';
+import React from "react";
+import Pathfinder from "./Pathfinder";
+import Home from "./Home";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 const App = () => {
+  const [theme, setTheme] = React.useState(() => {
+    const stored = localStorage.getItem("pf-theme");
+    return stored === "light" ? "light" : "dark";
+  });
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("pf-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = React.useCallback(() => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }, []);
+
   return (
-      <BrowserRouter>
+    <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/pathfinder" element={<Pathfinder />} />
+        <Route
+          path="/"
+          element={<Home theme={theme} onToggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/pathfinder"
+          element={<Pathfinder theme={theme} onToggleTheme={toggleTheme} />}
+        />
       </Routes>
     </BrowserRouter>
-  )
-}
+  );
+};
 
-export default App
+export default App;

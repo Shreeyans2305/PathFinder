@@ -14,6 +14,8 @@ import "./Pathfinder.css";
 import { fetchRouteGraph, CITY_CENTERS } from "./routeToGraph";
 import { dfs, bfs, dijkstra, astar, gbfs } from "./algorithms";
 import { useLocation } from "react-router-dom";
+import PillNav from "./components/PillNav";
+import logo from "/PathFinder.png";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -151,7 +153,9 @@ function CityQuerySync({ onCityPicked }) {
   return null;
 }
 
-const Pathfinder = () => {
+const Pathfinder = ({ theme, onToggleTheme }) => {
+  const isDark = theme === "dark";
+
   const [source, setSource] = React.useState(null);
   const [destination, setDestination] = React.useState(null);
   const [mode, setMode] = React.useState("source");
@@ -261,6 +265,26 @@ const Pathfinder = () => {
 
   return (
     <div className="app-wrapper">
+      <PillNav
+        logo={logo}
+        logoAlt="PathFinder Logo"
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Pathfinder", href: "/pathfinder" },
+        ]}
+        activeHref="/pathfinder"
+        className="home-nav"
+        ease="power2.easeOut"
+        baseColor={isDark ? "#0f0f10" : "#f6f7fb"}
+        pillColor={isDark ? "#1a1a1c" : "#ffffff"}
+        hoveredPillTextColor={isDark ? "#ffffff" : "#111827"}
+        pillTextColor={isDark ? "#f5f5f5" : "#1f2937"}
+        theme={theme}
+        showThemeToggle={true}
+        onThemeToggle={onToggleTheme}
+        initialLoadAnimation={false}
+      />
+
       <div className="city-buttons">
         {Object.entries(CITY_CENTERS).map(([key, city]) => (
           <button
@@ -332,7 +356,11 @@ const Pathfinder = () => {
       >
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url={
+            isDark
+              ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          }
         />
         <MapRef mapRef={mapRef} />
         <CityQuerySync onCityPicked={reset} />

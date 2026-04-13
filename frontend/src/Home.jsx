@@ -4,7 +4,9 @@ import logo from "/PathFinder.png";
 import "./Home.css";
 import CircularGallery from "./components/CircularGallery";
 
-const Home = () => {
+const Home = ({ theme, onToggleTheme }) => {
+  const isDark = theme === "dark";
+
   return (
     <div className="home-page">
       <PillNav
@@ -17,16 +19,17 @@ const Home = () => {
         activeHref="/"
         className="home-nav"
         ease="power2.easeOut"
-        baseColor="#0f0f10"
-        pillColor="#1a1a1c"
-        hoveredPillTextColor="#ffffff"
-        pillTextColor="#f5f5f5"
-        theme="dark"
+        baseColor={isDark ? "#0f0f10" : "#f6f7fb"}
+        pillColor={isDark ? "#1a1a1c" : "#ffffff"}
+        hoveredPillTextColor={isDark ? "#ffffff" : "#111827"}
+        pillTextColor={isDark ? "#f5f5f5" : "#1f2937"}
+        theme={theme}
+        showThemeToggle={true}
+        onThemeToggle={onToggleTheme}
         initialLoadAnimation={true}
       />
       <main className="home-main">
         <section className="home-hero" aria-label="PathFinder introduction">
-          <p className="home-kicker">Route Search Visualizer</p>
           <h1>Explore world cities with animated pathfinding</h1>
           <p className="home-subtitle">
             Swipe or scroll through map tiles, pick a city, then watch BFS, DFS,

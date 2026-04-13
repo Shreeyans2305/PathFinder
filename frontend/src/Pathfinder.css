@@ -7,9 +7,10 @@
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  background: #080400;
+  background: var(--path-bg);
   margin: 0;
   padding: 0;
+  padding-top: 64px;
 }
 
 
@@ -20,12 +21,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0a0500;
-  color: #ffaa00;
+  background: var(--bar-bg);
+  color: var(--button-text);
   font-size: 15px;
   gap: 16px;
   padding: 0 1.5rem;
-  border-bottom: 1px solid #2a1100;
+  border-bottom: 1px solid var(--bar-border);
   letter-spacing: 0.3px;
 }
 
@@ -34,13 +35,13 @@
 }
 
 .controls strong {
-  color: #ff6600;
+  color: var(--button-text);
 }
 
 .controls select {
-  background: #130800;
-  color: #ffaa00;
-  border: 1px solid #3a1a00;
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: 1px solid var(--button-border);
   border-radius: 6px;
   padding: 5px 10px;
   font-size: 14px;
@@ -55,9 +56,9 @@
 .controls button {
   padding: 5px 16px;
   border-radius: 6px;
-  border: 1px solid #3a1a00;
-  background: #130800;
-  color: #ffaa00;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -65,9 +66,7 @@
 }
 
 .controls button:hover {
-  background: #2a1000;
-  color: #ffcc44;
-  border-color: #7a3a00;
+  filter: brightness(1.05);
 }
 
 /* ── Hide the LRM directions panel — we only want the route line ──────────── */
@@ -130,8 +129,8 @@
   justify-content: center;
   gap: 8px;
   padding: 6px 12px;
-  background: #060300;
-  border-bottom: 1px solid #1a0900;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--bar-border);
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
@@ -140,16 +139,15 @@
 .city-buttons button {
   padding: 5px 12px;
   border-radius: 999px;
-  border: 1px solid #3a1a00;
-  background: #130800;
-  color: #ffaa00;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
   cursor: pointer;
   flex: 0 0 auto;
 }
 
 .city-buttons button:hover {
-  background: #2a1000;
-  color: #ffcc44;
+  filter: brightness(1.05);
 }
 
 /* Shrink map to account for both bars */

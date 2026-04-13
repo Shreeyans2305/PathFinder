@@ -15,7 +15,10 @@ const PillNav = ({
   hoveredPillTextColor = '#060010',
   pillTextColor,
   onMobileMenuClick,
-  initialLoadAnimation = true
+  initialLoadAnimation = true,
+  theme = 'dark',
+  showThemeToggle = false,
+  onThemeToggle
 }) => {
   const resolvedPillTextColor = pillTextColor ?? baseColor;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -317,6 +320,18 @@ const PillNav = ({
           <span className="hamburger-line" />
           <span className="hamburger-line" />
         </button>
+
+        {showThemeToggle && (
+          <button
+            className="pill-theme-toggle"
+            type="button"
+            onClick={onThemeToggle}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? '☀' : '⏾'}
+          </button>
+        )}
       </nav>
 
       <div className="mobile-menu-popover mobile-only" ref={mobileMenuRef} style={cssVars}>

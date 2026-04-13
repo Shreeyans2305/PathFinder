@@ -1,37 +1,30 @@
 .cg-shell {
   width: 100%;
-  min-height: calc(100dvh - 210px);
+  min-height: auto;
   display: grid;
   place-items: center;
-  grid-template-rows: 1fr auto;
-  gap: 18px;
-  padding: 8px;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  padding: 8px 0 16px;
 }
 
 .cg-frame {
   position: relative;
-  width: min(96vw, 1520px);
-  height: clamp(320px, 58vh, 640px);
-  border-radius: 36px;
-  border: 1px solid rgba(157, 154, 255, 0.2);
-  background: radial-gradient(circle at 50% 0%, #0a0332 0%, #060018 45%, #050015 100%);
-  box-shadow: inset 0 0 0 1px rgba(105, 102, 255, 0.08), 0 18px 40px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
+  width: min(96vw, 1400px);
+  border-radius: 20px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(20px, 4vw, 44px) clamp(38px, 5vw, 68px);
+  padding: 14px clamp(28px, 4vw, 48px) 20px;
 }
 
 .cg-frame::before,
 .cg-frame::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: clamp(30px, 4.5vw, 74px);
-  z-index: 2;
-  pointer-events: none;
+  display: none;
 }
 
 .cg-frame::before {
@@ -47,12 +40,12 @@
 .cg-track {
   width: 100%;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: flex-start;
-  gap: clamp(16px, 2.1vw, 32px);
-  padding: 8px 12px 14px;
+  gap: clamp(18px, 2.2vw, 30px);
+  padding: 12px 10px 24px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 12px;
   scrollbar-width: none;
@@ -63,15 +56,15 @@
 }
 
 .cg-city-card {
-  flex: 0 0 clamp(220px, 24vw, 340px);
-  width: clamp(220px, 24vw, 340px);
-  min-height: clamp(224px, 34vh, 430px);
-  border-radius: 22px;
+  flex: 0 0 clamp(180px, 16vw, 250px);
+  width: clamp(180px, 16vw, 250px);
+  min-height: auto;
+  border-radius: 999px;
   padding: 0;
   background: transparent;
   border: 0;
   display: grid;
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: auto auto auto;
   gap: 10px;
   justify-items: center;
   text-align: center;
@@ -84,16 +77,17 @@
 }
 
 .cg-city-card:hover {
-  transform: translateY(calc(var(--drop) - 8px)) rotate(var(--tilt)) scale(1.015);
+  transform: translateY(calc(var(--drop) - 8px)) rotate(var(--tilt)) scale(1.03);
 }
 
 .cg-map-wrap {
   width: 100%;
-  height: clamp(180px, 30vh, 320px);
-  border-radius: 22px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  border-radius: 50%;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35), 0 0 0 6px rgba(96, 104, 255, 0.08);
 }
 
 .cg-mini-map {
@@ -107,9 +101,9 @@
 }
 
 .cg-city-card h3 {
-  color: #fff;
-  font-size: clamp(0.95rem, 1.6vw, 2rem);
-  font-weight: 500;
+  color: var(--text);
+  font-size: clamp(0.95rem, 1.1vw, 1.18rem);
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -117,8 +111,10 @@
 }
 
 .cg-city-card p {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: clamp(0.7rem, 0.9vw, 1rem);
+  display: block;
+  color: var(--muted-text);
+  font-size: clamp(0.75rem, 0.86vw, 0.9rem);
+  line-height: 1.2;
 }
 
 .cg-emoji {
@@ -128,6 +124,7 @@
 .cg-actions {
   display: flex;
   justify-content: center;
+  margin-top: 4px;
 }
 
 .cg-nav {
@@ -139,7 +136,7 @@
   height: 38px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(10, 11, 18, 0.62);
+  background: rgba(36, 36, 36, 0.95);
   color: #fff;
   font-size: 18px;
   cursor: pointer;
@@ -175,22 +172,31 @@
   filter: brightness(1.06);
 }
 
+:root[data-theme="light"] .cg-nav {
+  border-color: rgba(30, 58, 95, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1e293b;
+}
+
+:root[data-theme="light"] .cg-map-wrap {
+  border-color: rgba(30, 58, 95, 0.26);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16), 0 0 0 6px rgba(70, 104, 214, 0.08);
+}
+
 @media (max-width: 900px) {
   .cg-frame {
-    height: clamp(300px, 56vh, 540px);
-    border-radius: 24px;
-    padding-inline: 24px;
+    padding-inline: 18px;
   }
 
   .cg-track {
     gap: 12px;
-    padding: 8px 6px 12px;
+    padding: 10px 4px 14px;
   }
 
   .cg-city-card {
-    width: 190px;
-    flex-basis: 190px;
-    min-height: 210px;
+    width: 150px;
+    flex-basis: 150px;
+    min-height: auto;
     transform: none;
   }
 
@@ -198,15 +204,11 @@
     transform: translateY(-4px) scale(1.01);
   }
 
-  .cg-map-wrap {
-    height: 146px;
+  .cg-nav {
+    display: none;
   }
 
   .cg-city-card p {
-    display: none;
-  }
-
-  .cg-nav {
-    display: none;
+    font-size: 0.76rem;
   }
 }
