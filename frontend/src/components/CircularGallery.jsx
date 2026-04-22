@@ -94,10 +94,8 @@ export default function CircularGallery({ view = "circular" }) {
           aria-label="Supported city previews"
         >
           {cities.map((city, index) => {
-            const mid = (cities.length - 1) / 2;
-            const normalized = (index - mid) / (mid || 1);
-            const tilt = isListView ? 0 : normalized * 10;
-            const drop = isListView ? 0 : Math.round(Math.abs(normalized) * 22);
+            const tilt = 0;
+            const drop = 0;
 
             return (
               <Link

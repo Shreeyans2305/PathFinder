@@ -1,9 +1,13 @@
 .home-page {
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 20% 10%, rgba(74, 65, 183, 0.25), transparent 38%),
-    radial-gradient(circle at 80% 20%, rgba(255, 135, 36, 0.18), transparent 34%),
-    var(--bg);
+    linear-gradient(var(--home-overlay, rgba(6, 8, 18, 0.58)), var(--home-overlay, rgba(6, 8, 18, 0.58))),
+    url('/background2.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  position: relative;
 }
 
 .home-main {
@@ -11,12 +15,18 @@
   padding: 96px clamp(14px, 2vw, 32px) 24px;
   max-width: 1680px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .home-hero {
   text-align: center;
   margin: 0 auto 18px;
   max-width: 900px;
+  padding: 12px 18px 10px;
+  border-radius: 22px;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 
@@ -27,6 +37,7 @@
   color: var(--text);
   font-size: clamp(1.7rem, 3.2vw, 3.1rem);
   font-weight: 700;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
 }
 
 .home-subtitle {
@@ -35,13 +46,52 @@
   line-height: 1.5;
   max-width: 720px;
   font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.22);
+}
+
+.home-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.home-learn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  font-weight: 700;
+}
+
+.home-learn-btn:hover {
+  filter: brightness(1.05);
+}
+
+:root[data-theme="light"] .home-learn-btn {
+  color: #111827;
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(15, 23, 42, 0.1);
 }
 
 :root[data-theme="light"] .home-page {
   background:
-    radial-gradient(circle at 15% 0%, rgba(146, 181, 255, 0.28), transparent 36%),
-    radial-gradient(circle at 88% 14%, rgba(255, 196, 146, 0.26), transparent 34%),
-    var(--bg);
+    linear-gradient(var(--home-overlay, rgba(245, 247, 252, 0.66)), var(--home-overlay, rgba(245, 247, 252, 0.66))),
+    url('/background2.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+:root[data-theme="light"] .home-hero {
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
 }
 
 @media (max-width: 800px) {

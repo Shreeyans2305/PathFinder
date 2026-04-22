@@ -3,7 +3,7 @@ import PillNav from "./components/PillNav";
 import logo from "/PathFinder.png";
 import "./Home.css";
 import CircularGallery from "./components/CircularGallery";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Home = ({ theme, onToggleTheme }) => {
   const isDark = theme === "dark";
@@ -20,12 +20,19 @@ const Home = ({ theme, onToggleTheme }) => {
   }, [currentView, navigate]);
 
   return (
-    <div className="home-page">
+    <div
+      className="home-page"
+      style={{
+        "--home-overlay": isDark ? "rgba(6, 8, 18, 0.58)" : "rgba(245, 247, 252, 0.66)",
+        "--home-accent": isDark ? "rgba(90, 110, 255, 0.20)" : "rgba(95, 129, 255, 0.18)",
+      }}
+    >
       <PillNav
         logo={logo}
         logoAlt="PathFinder Logo"
         items={[
           { label: "Home", href: "/" },
+          { label: "Learn", href: "/learn" },
           { label: "Pathfinder", href: "/pathfinder" },
         ]}
         activeHref="/"
@@ -45,11 +52,16 @@ const Home = ({ theme, onToggleTheme }) => {
       />
       <main className="home-main">
         <section className="home-hero" aria-label="PathFinder introduction">
-          <h1>Explore world cities with animated pathfinding</h1>
+          <h1>Visually explore how path finding algorithms work in <b>real time.<br/><i>Pick any City to get Started!!</i></b></h1>
           <p className="home-subtitle">
             Swipe or scroll through map tiles, pick a city, then watch BFS, DFS,
             Dijkstra, A* and GBFS discover routes in real time.
           </p>
+          <div className="home-actions">
+            <Link to="/learn" className="home-learn-btn">
+              Learn the algorithms
+            </Link>
+          </div>
         </section>
         <CircularGallery view={currentView} />
       </main>

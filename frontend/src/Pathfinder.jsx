@@ -305,6 +305,7 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
         items={[
           { label: "Home", href: "/" },
           { label: "Pathfinder", href: "/pathfinder" },
+          { label: "Learn", href: "/learn" },
         ]}
         activeHref="/pathfinder"
         className="home-nav"

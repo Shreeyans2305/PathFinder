@@ -1,6 +1,7 @@
 import React from "react";
 import Pathfinder from "./Pathfinder";
 import Home from "./Home";
+import Learn from "./Learn";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 const App = () => {
@@ -28,6 +29,10 @@ const App = () => {
         <Route
           path="/pathfinder"
           element={<Pathfinder theme={theme} onToggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/learn"
+          element={<Learn theme={theme} onToggleTheme={toggleTheme} />}
         />
       </Routes>
     </BrowserRouter>
