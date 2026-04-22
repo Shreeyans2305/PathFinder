@@ -6,16 +6,16 @@ import { CITY_CENTERS } from "../routeToGraph";
 import "./CircularGallery.css";
 
 const CITY_STYLES = {
-  london: { emoji: "☕", subtitle: "Thames-side historic streets and ring roads", zoom: 13 },
-  newyork: { emoji: "🗽", subtitle: "Manhattan grid with dense borough connectors", zoom: 13 },
-  mumbai: { emoji: "🌴", subtitle: "Coastal arterials and island-city links", zoom: 13 },
-  paris: { emoji: "🗼", subtitle: "Boulevards, river crossings, and radial avenues", zoom: 13 },
-  tokyo: { emoji: "🗾", subtitle: "High-density road network with tight urban blocks", zoom: 13 },
-  rio: { emoji: "🌴", subtitle: "Coastal roads shaped by hills and bays", zoom: 13 },
-  delhi: { emoji: "🌴", subtitle: "Historic cores, ring roads, and wide expressways", zoom: 13 },
-  berlin: { emoji: "🏰", subtitle: "Broad avenues, local streets, and tram corridors", zoom: 13 },
-  sydney: { emoji: "🌊", subtitle: "Harbor crossings and sprawling coastal suburbs", zoom: 13 },
-  world: { emoji: "🌍", subtitle: "Live OpenStreetMap roads for short routes only", zoom: 1 },
+  london: { emoji: "☕", subtitle: "Historic core with ring roads and Thames crossings", zoom: 13 },
+  newyork: { emoji: "🗽", subtitle: "Manhattan grid linked by bridges and borough arterials", zoom: 13 },
+  mumbai: { emoji: "🌴", subtitle: "Peninsular road corridors with major east-west connectors", zoom: 13 },
+  paris: { emoji: "🗼", subtitle: "Radial avenues, boulevards, and Seine river crossings", zoom: 13 },
+  tokyo: { emoji: "🗾", subtitle: "Dense urban streets with layered arterial ring routes", zoom: 13 },
+  rio: { emoji: "🌴", subtitle: "Coastal corridors shaped by mountains, tunnels, and bays", zoom: 13 },
+  delhi: { emoji: "🌴", subtitle: "Radial roads, ring roads, and long arterial corridors", zoom: 13 },
+  berlin: { emoji: "🏰", subtitle: "Wide boulevards, inner ring links, and neighborhood grids", zoom: 13 },
+  sydney: { emoji: "🌊", subtitle: "Harbor-influenced routes with coastal and suburban connectors", zoom: 13 },
+  world: { emoji: "🌍", subtitle: "Live OpenStreetMap road data for short-distance experiments", zoom: 1 },
 };
 
 function MiniMapResizeFix() {
