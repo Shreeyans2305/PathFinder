@@ -227,4 +227,4 @@ High-level flow:
 
 ## License
 
-No license file is currently defined in this repository.
+MIT License
