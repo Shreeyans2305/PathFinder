@@ -32,6 +32,13 @@ export const CITY_CENTERS = {
   delhi:      { lat: 28.613,  lng: 77.209,   radius: 0.09, label: "Delhi" },
   berlin:     { lat: 52.520,  lng: 13.405,   radius: 0.09, label: "Berlin" },
   sydney:     { lat: -33.868, lng: 151.209,  radius: 0.09, label: "Sydney" },
+  world:      {
+    lat: 20,
+    lng: 0,
+    radius: 0,
+    label: "World (Experimental)",
+    experimental: true,
+  },
 };
 // Determine which city graph to load based on where the user clicked
 async function detectCity(point) {
@@ -48,6 +55,7 @@ async function detectCity(point) {
   };
 
   for (const [key, city] of Object.entries(CITY_CENTERS)) {
+    if (city.experimental) continue;
     const dLat = Math.abs(point.lat - city.lat);
     const dLng = Math.abs(point.lng - city.lng);
     if (dLat < city.radius && dLng < city.radius) return key;

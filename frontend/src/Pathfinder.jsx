@@ -25,12 +25,15 @@ L.Icon.Default.mergeOptions({
 });
 
 const PAD = 0.15;
-const allLats = Object.values(CITY_CENTERS).map((c) => c.lat);
-const allLngs = Object.values(CITY_CENTERS).map((c) => c.lng);
+const supportedCities = Object.values(CITY_CENTERS).filter((c) => !c.experimental);
+const allLats = supportedCities.map((c) => c.lat);
+const allLngs = supportedCities.map((c) => c.lng);
 const MAP_BOUNDS = [
   [Math.min(...allLats) - PAD, Math.min(...allLngs) - PAD],
   [Math.max(...allLats) + PAD, Math.max(...allLngs) + PAD],
 ];
+const WORLD_WARNING =
+  "World (Experimental) uses live OpenStreetMap road data. Please pick small distances for the best results.";
 
 const glowDot = (color) =>
   L.divIcon({
@@ -126,8 +129,23 @@ function MapRef({ mapRef }) {
   return null;
 }
 
-function CityQuerySync({ onCityPicked }) {
+function MapViewSync({ isWorldMode }) {
   const map = useMap();
+
+  useEffect(() => {
+    if (isWorldMode) {
+      map.setMaxBounds(null);
+      map.setMinZoom(2);
+    } else {
+      map.setMaxBounds(MAP_BOUNDS);
+      map.setMinZoom(4);
+    }
+  }, [isWorldMode, map]);
+
+  return null;
+}
+
+function CityQuerySync({ onCityPicked }) {
   const location = useLocation();
   const lastHandledSearchRef = useRef(null);
 
@@ -142,12 +160,8 @@ function CityQuerySync({ onCityPicked }) {
     if (!city) return;
 
     lastHandledSearchRef.current = location.search;
-    map.flyTo([city.lat, city.lng], 14, {
-      animate: true,
-      duration: 1.3,
-    });
-    onCityPicked?.();
-  }, [location.search, map, onCityPicked]);
+    onCityPicked?.(cityKey.toLowerCase(), city);
+  }, [location.search, onCityPicked]);
 
   return null;
 }
@@ -158,6 +172,7 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
   const [source, setSource] = React.useState(null);
   const [destination, setDestination] = React.useState(null);
   const [mode, setMode] = React.useState("source");
+  const [selectedCity, setSelectedCity] = React.useState("newyork");
   const [pathFound, setPathFound] = React.useState(false);
   const [shortestPath, setShortestPath] = React.useState([]);
   const [algorithm, setAlgorithm] = React.useState("dijkstra");
@@ -171,11 +186,52 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
   const workerRef = React.useRef(null);
   const requestSeqRef = React.useRef(0);
   const pendingRequestsRef = React.useRef(new Map());
+  const warnedWorldRef = React.useRef(false);
+
+  const activeCity = CITY_CENTERS[selectedCity] ?? CITY_CENTERS.newyork;
+  const isWorldMode = selectedCity === "world";
 
   const clearAllTimers = React.useCallback(() => {
     animationRef.current.forEach(clearTimeout);
     animationRef.current = [];
   }, []);
+
+  const resetRoute = React.useCallback(() => {
+    clearAllTimers();
+    explorationRef.current?.clear();
+    setSource(null);
+    setDestination(null);
+    setMode("source");
+    setPathFound(false);
+    setShortestPath([]);
+    setLoading(false);
+    setIsAnimating(false);
+    setError(null);
+  }, [clearAllTimers]);
+
+  const activateCity = React.useCallback(
+    (cityKey) => {
+      const key = cityKey.toLowerCase();
+      const city = CITY_CENTERS[key];
+      if (!city) return;
+
+      resetRoute();
+      setSelectedCity(key);
+
+      mapRef.current?.flyTo([city.lat, city.lng], city.experimental ? 2 : 14, {
+        animate: true,
+        duration: 1.8,
+      });
+
+      if (city.experimental && !warnedWorldRef.current) {
+        warnedWorldRef.current = true;
+        window.alert(WORLD_WARNING);
+      } else if (!city.experimental) {
+        warnedWorldRef.current = false;
+      }
+    },
+    [resetRoute],
+  );
 
   useEffect(() => {
     const worker = new Worker(
@@ -240,6 +296,7 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
         source,
         destination,
         algorithm,
+        cityKey: selectedCity,
       });
 
       if (!path || path.length < 2) {
@@ -272,20 +329,11 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
       setLoading(false);
       setIsAnimating(false);
     }
-  }, [algorithm, clearAllTimers, destination, isAnimating, loading, runPathSearch, source]);
+  }, [algorithm, clearAllTimers, destination, isAnimating, loading, runPathSearch, selectedCity, source]);
 
   const reset = React.useCallback(() => {
-    clearAllTimers();
-    explorationRef.current?.clear();
-    setSource(null);
-    setDestination(null);
-    setMode("source");
-    setPathFound(false);
-    setShortestPath([]);
-    setLoading(false);
-    setIsAnimating(false);
-    setError(null);
-  }, [clearAllTimers]);
+    resetRoute();
+  }, [resetRoute]);
 
   const handleSourceSet = (latlng) => {
     setSource(latlng);
@@ -325,11 +373,7 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
           <button
             key={key}
             onClick={() => {
-              mapRef.current?.flyTo([city.lat, city.lng], 14, {
-                animate: true,
-                duration: 1.8,
-              });
-              reset();
+              activateCity(key);
             }}
           >
             {city.label}
@@ -338,6 +382,11 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
       </div>
 
       <div className="controls">
+        {isWorldMode && (
+          <p style={{ color: isDark ? "#fbbf24" : "#b45309", marginBottom: "10px" }}>
+            World mode is experimental and uses live OpenStreetMap roads.
+          </p>
+        )}
         {mode === "source" && (
           <p>
             📍 Click the map to set <strong>source</strong>
@@ -363,7 +412,9 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
             </select>
             <button onClick={runAlgorithm} disabled={loading || isAnimating}>
               {loading
-                ? "⏳ Fetching roads..."
+                ? isWorldMode
+                  ? "⏳ Fetching live roads..."
+                  : "⏳ Fetching roads..."
                 : isAnimating
                   ? "🎞 Tracing..."
                   : "▶ Run"}
@@ -381,13 +432,13 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
       </div>
 
       <MapContainer
-        center={[40.758, -73.9855]}
-        zoom={13}
+        center={[activeCity.lat, activeCity.lng]}
+        zoom={isWorldMode ? 2 : 13}
         scrollWheelZoom={true}
         className="mapc"
-        maxBounds={MAP_BOUNDS}
+        maxBounds={isWorldMode ? undefined : MAP_BOUNDS}
         maxBoundsViscosity={1.0}
-        minZoom={4}
+        minZoom={isWorldMode ? 2 : 4}
       >
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
@@ -398,7 +449,8 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
           }
         />
         <MapRef mapRef={mapRef} />
-        <CityQuerySync onCityPicked={reset} />
+        <MapViewSync isWorldMode={isWorldMode} />
+        <CityQuerySync onCityPicked={activateCity} />
         <ClickHandler
           onSourceSet={handleSourceSet}
           onDestinationSet={handleDestinationSet}

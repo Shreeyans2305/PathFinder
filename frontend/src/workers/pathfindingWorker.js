@@ -1,22 +1,22 @@
-const CITY_CENTERS = {
-  london: { lat: 51.505, lng: -0.09, radius: 0.09 },
-  newyork: { lat: 40.758, lng: -73.985, radius: 0.09 },
-  mumbai: { lat: 19.076, lng: 72.877, radius: 0.09 },
-  paris: { lat: 48.856, lng: 2.352, radius: 0.09 },
-  tokyo: { lat: 35.676, lng: 139.65, radius: 0.09 },
-  rio: { lat: -22.906, lng: -43.172, radius: 0.09 },
-  delhi: { lat: 28.613, lng: 77.209, radius: 0.09 },
-  berlin: { lat: 52.52, lng: 13.405, radius: 0.09 },
-  sydney: { lat: -33.868, lng: 151.209, radius: 0.09 },
-};
+import { CITY_CENTERS } from "../routeToGraph";
 
 const GRAPH_CACHE = {};
 
 self.onmessage = async (event) => {
-  const { id, source, destination, algorithm } = event.data || {};
+  const { id, source, destination, algorithm, cityKey } = event.data || {};
 
   try {
-    const city = detectCity(source);
+    if (!source || !destination) {
+      throw new Error("Please choose both source and destination points.");
+    }
+
+    if (cityKey === "world") {
+      const result = await runWorldRouteSearch(source, destination, algorithm);
+      self.postMessage({ id, ok: true, result });
+      return;
+    }
+
+    const city = cityKey && cityKey !== "auto" ? cityKey : detectCity(source);
 
     if (!GRAPH_CACHE[city]) {
       const res = await fetch(`/graphs/${city}.json`);
@@ -45,8 +45,121 @@ self.onmessage = async (event) => {
   }
 };
 
+async function runWorldRouteSearch(source, destination, algorithm) {
+  const distance = haversine(source.lat, source.lng, destination.lat, destination.lng);
+  if (distance > 50000) {
+    throw new Error(
+      "World (Experimental) works best for smaller distances. Please pick points that are closer together.",
+    );
+  }
+
+  const bounds = buildWorldBounds(source, destination);
+  const cacheKey = `world:${bounds.south.toFixed(4)},${bounds.west.toFixed(4)},${bounds.north.toFixed(4)},${bounds.east.toFixed(4)}`;
+
+  if (!GRAPH_CACHE[cacheKey]) {
+    GRAPH_CACHE[cacheKey] = await fetchWorldGraph(bounds);
+  }
+
+  const { graph, nodes } = GRAPH_CACHE[cacheKey];
+  const startKey = nearestNode(source.lat, source.lng, nodes);
+  const endKey = nearestNode(destination.lat, destination.lng, nodes);
+
+  if (!startKey || !endKey || Object.keys(graph).length === 0) {
+    throw new Error("Could not build a live OpenStreetMap graph for this area.");
+  }
+
+  let result;
+  if (algorithm === "dfs") result = dfs(graph, startKey, endKey);
+  else if (algorithm === "bfs") result = bfs(graph, startKey, endKey);
+  else if (algorithm === "astar") result = astar(graph, nodes, startKey, endKey);
+  else if (algorithm === "gbfs") result = gbfs(graph, nodes, startKey, endKey);
+  else result = dijkstra(graph, startKey, endKey);
+
+  return normalizeWorldResult(result, nodes);
+}
+
+function buildWorldBounds(source, destination) {
+  const latMid = (source.lat + destination.lat) / 2;
+  const lngMid = (source.lng + destination.lng) / 2;
+  const latDiff = Math.abs(source.lat - destination.lat);
+  const lngDiff = Math.abs(source.lng - destination.lng);
+
+  const latPad = clamp(latDiff * 0.75 + 0.015, 0.02, 0.15);
+  const lngPad = clamp(lngDiff * 0.75 + 0.015, 0.02, 0.15);
+
+  return {
+    south: clamp(latMid - latPad, -85, 85),
+    north: clamp(latMid + latPad, -85, 85),
+    west: clamp(lngMid - lngPad, -180, 180),
+    east: clamp(lngMid + lngPad, -180, 180),
+  };
+}
+
+async function fetchWorldGraph(bounds) {
+  const query = `[out:json][timeout:25];(way["highway"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});>;);out body;`;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: `data=${encodeURIComponent(query)}`,
+  });
+
+  if (!res.ok) {
+    throw new Error("OpenStreetMap road data is temporarily unavailable.");
+  }
+
+  const data = await res.json();
+  const nodes = {};
+  const graph = {};
+
+  for (const element of data.elements ?? []) {
+    if (element.type === "node" && typeof element.lat === "number" && typeof element.lon === "number") {
+      nodes[String(element.id)] = { lat: element.lat, lng: element.lon };
+    }
+  }
+
+  for (const element of data.elements ?? []) {
+    if (element.type !== "way" || !Array.isArray(element.nodes) || !element.tags?.highway) continue;
+
+    for (let index = 0; index < element.nodes.length - 1; index += 1) {
+      const a = String(element.nodes[index]);
+      const b = String(element.nodes[index + 1]);
+      const nodeA = nodes[a];
+      const nodeB = nodes[b];
+      if (!nodeA || !nodeB) continue;
+
+      const distance = haversine(nodeA.lat, nodeA.lng, nodeB.lat, nodeB.lng);
+      addEdge(graph, a, b, distance);
+      addEdge(graph, b, a, distance);
+    }
+  }
+
+  return { graph, nodes };
+}
+
+function addEdge(graph, from, to, distance) {
+  if (!graph[from]) graph[from] = [];
+  graph[from].push({ neighbour: to, distance });
+}
+
+function normalizeWorldResult(result, nodes) {
+  const toCoordKey = (key) => {
+    const node = nodes[key];
+    return node ? `${node.lat},${node.lng}` : key;
+  };
+
+  return {
+    ...result,
+    path: (result.path ?? []).map(toCoordKey),
+    visitedOrder: (result.visitedOrder ?? []).map(toCoordKey),
+    parent: Object.fromEntries(
+      Object.entries(result.parent ?? {}).map(([child, parent]) => [toCoordKey(child), toCoordKey(parent)]),
+    ),
+  };
+}
+
 function detectCity(point) {
   for (const [key, city] of Object.entries(CITY_CENTERS)) {
+    if (city.experimental) continue;
     const dLat = Math.abs(point.lat - city.lat);
     const dLng = Math.abs(point.lng - city.lng);
     if (dLat < city.radius && dLng < city.radius) return key;
@@ -77,6 +190,10 @@ function haversine(lat1, lng1, lat2, lng2) {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function dfs(graph, start, end) {
