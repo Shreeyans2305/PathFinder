@@ -1,6 +1,11 @@
 import { CITY_CENTERS } from "../routeToGraph";
 
 const GRAPH_CACHE = {};
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+];
 
 self.onmessage = async (event) => {
   const { id, source, destination, algorithm, cityKey } = event.data || {};
@@ -19,9 +24,7 @@ self.onmessage = async (event) => {
     const city = cityKey && cityKey !== "auto" ? cityKey : detectCity(source);
 
     if (!GRAPH_CACHE[city]) {
-      const res = await fetch(`/graphs/${city}.json`);
-      if (!res.ok) throw new Error("No pre-built graph for this area.");
-      GRAPH_CACHE[city] = await res.json();
+      GRAPH_CACHE[city] = await fetchCityGraph(city);
     }
 
     const { graph, nodes } = GRAPH_CACHE[city];
@@ -41,7 +44,8 @@ self.onmessage = async (event) => {
 
     self.postMessage({ id, ok: true, result });
   } catch (err) {
-    self.postMessage({ id, ok: false, error: err.message || "Pathfinding failed." });
+    const message = normalizeWorkerError(err);
+    self.postMessage({ id, ok: false, error: message });
   }
 };
 
@@ -97,17 +101,7 @@ function buildWorldBounds(source, destination) {
 
 async function fetchWorldGraph(bounds) {
   const query = `[out:json][timeout:25];(way["highway"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});>;);out body;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-    body: `data=${encodeURIComponent(query)}`,
-  });
-
-  if (!res.ok) {
-    throw new Error("OpenStreetMap road data is temporarily unavailable.");
-  }
-
-  const data = await res.json();
+  const data = await fetchOverpassWithFallback(query);
   const nodes = {};
   const graph = {};
 
@@ -134,6 +128,115 @@ async function fetchWorldGraph(bounds) {
   }
 
   return { graph, nodes };
+}
+
+async function fetchCityGraph(city) {
+  const urls = getCityGraphCandidates(city);
+  const data = await fetchJsonWithFallback(urls, { timeoutMs: 10000, retries: 2 });
+
+  if (!data?.graph || !data?.nodes) {
+    throw new Error("No pre-built graph for this area.");
+  }
+
+  return data;
+}
+
+function getCityGraphCandidates(city) {
+  const rootRelative = `/graphs/${city}.json`;
+  const workerRelative = new URL(`../graphs/${city}.json`, self.location.href).toString();
+  const currentPath = self.location.pathname || "/";
+  const assetsIndex = currentPath.indexOf("/assets/");
+
+  if (assetsIndex === -1) {
+    return [rootRelative, workerRelative];
+  }
+
+  const basePath = currentPath.slice(0, assetsIndex) || "/";
+  const fromBase = `${basePath.replace(/\/$/, "")}/graphs/${city}.json`;
+  return [fromBase, rootRelative, workerRelative];
+}
+
+async function fetchOverpassWithFallback(query) {
+  let lastError = null;
+
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      return await fetchOverpass(endpoint, query, 18000);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(lastError?.message || "OpenStreetMap road data is temporarily unavailable.");
+}
+
+async function fetchOverpass(url, query, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Live road source responded with ${res.status}.`);
+    }
+
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchJsonWithFallback(urls, { timeoutMs = 10000, retries = 1 } = {}) {
+  let lastError = null;
+
+  for (const url of urls) {
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      try {
+        return await fetchJson(url, timeoutMs);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+  }
+
+  throw new Error(lastError?.message || "No pre-built graph for this area.");
+}
+
+async function fetchJson(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+
+    if (!res.ok) {
+      throw new Error(`Graph fetch failed with ${res.status} at ${url}`);
+    }
+
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function normalizeWorkerError(err) {
+  const msg = err?.message || "Pathfinding failed.";
+
+  if (msg.includes("Graph fetch failed with 404")) {
+    return "City graph files were not found in deployment. Verify that the public/graphs folder is included in the build output.";
+  }
+
+  if (msg.includes("aborted") || msg.includes("AbortError")) {
+    return "Road data request timed out. Please try again or choose a smaller area.";
+  }
+
+  return msg;
 }
 
 function addEdge(graph, from, to, distance) {
