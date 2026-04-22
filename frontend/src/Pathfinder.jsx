@@ -383,7 +383,7 @@ const Pathfinder = ({ theme, onToggleTheme }) => {
 
       <div className="controls">
         {isWorldMode && (
-          <p style={{ color: isDark ? "#fbbf24" : "#b45309", marginBottom: "10px" }}>
+          <p className="world-mode-note">
             World mode is experimental and uses live OpenStreetMap roads.
           </p>
         )}

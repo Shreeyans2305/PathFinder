@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bar-bg);
-  color: var(--button-text);
+  color: var(--muted-text);
   font-size: 15px;
   gap: 16px;
   padding: 0 1.5rem;
@@ -34,8 +34,13 @@
   margin: 0;
 }
 
+.controls .world-mode-note {
+  color: var(--muted-text);
+  margin-bottom: 10px;
+}
+
 .controls strong {
-  color: var(--button-text);
+  color: var(--text);
 }
 
 .controls select {
@@ -141,7 +146,7 @@
   border-radius: 999px;
   border: 1px solid var(--button-border);
   background: var(--button-bg);
-  color: var(--button-text);
+  color: var(--text);
   cursor: pointer;
   flex: 0 0 auto;
 }
