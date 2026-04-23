@@ -2,6 +2,8 @@
 
 ## Overview
 
+![Welcome](frontend/public/welcome.png)
+
 PathFinder is a React and Vite web application for visualizing pathfinding algorithms on real-world road networks. The frontend provides an interactive map UI where users choose a source and destination, select an algorithm, and watch exploration and final route rendering.
 
 The project supports:
@@ -26,6 +28,8 @@ The frontend codebase is located in the [frontend](frontend) directory.
 ## Key Capabilities
 
 ### 1. Interactive Pathfinding Map
+
+![Preview](frontend/public/preview.png)
 
 The map experience is implemented in [frontend/src/Pathfinder.jsx](frontend/src/Pathfinder.jsx).
 
